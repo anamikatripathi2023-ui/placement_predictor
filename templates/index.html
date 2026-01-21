@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Placement Predictor</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Placement Predictor</h1>
+      <form id="predForm">
+        <label>CGPA:
+          <input type="number" id="cgpa" step="0.1" min="0" max="10" required />
+        </label>
+        <label>IQ:
+          <input type="number" id="iq" step="1" min="0" required />
+        </label>
+        <button type="submit">Predict</button>
+      </form>
+
+      <div id="result" class="result"></div>
+      <p class="note">This is a demo. Validate inputs before using in production.</p>
+    </div>
+
+    <script>
+      document.getElementById("predForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const cgpa = document.getElementById("cgpa").value;
+        const iq = document.getElementById("iq").value;
+        const resultDiv = document.getElementById("result");
+        resultDiv.innerText = "Predicting...";
+
+        try {
+          const res = await fetch("/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cgpa, iq })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            const probText = data.probability !== null ? ` (probability: ${data.probability.toFixed(3)})` : "";
+            resultDiv.innerText = data.placement === 1
+              ? `Likely to be placed ✅${probText}`
+              : `Likely not placed ❌${probText}`;
+          } else {
+            resultDiv.innerText = `Error: ${data.error || JSON.stringify(data)}`;
+          }
+        } catch (err) {
+          resultDiv.innerText = `Request failed: ${err}`;
+        }
+      });
+    </script>
+  </body>
+</html>
